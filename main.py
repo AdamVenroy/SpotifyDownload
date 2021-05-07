@@ -78,9 +78,8 @@ def reformat_playlist_tracks_data(playlist_tracks_data):
 
 def list_of_files_in_folder(location):
     """Returns a list of files in a folder, without extensions"""
-    list_of_files = [f[:-5] for f in os.listdir(location) if os.path.isfile(os.path.join(location, f))]
-    return list_of_files
-
+    return [f[:-5] for f in os.listdir(location) if os.path.isfile(os.path.join(location, f))]
+    
 
 def search_and_download(search, location):
     """Searches the search parameter on Youtube, and downloads the first
