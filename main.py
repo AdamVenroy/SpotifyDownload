@@ -1,3 +1,12 @@
+"""
+Title: Spotify Download
+Author: Adam V
+Date: 08/05/2021
+Description:
+Downloads Spotify Playlist and Albums by searching songs on Youtube and 
+downloading them through YT.
+"""
+
 import spotipy
 from spotipy.oauth2 import SpotifyClientCredentials
 from pytube import YouTube
@@ -23,7 +32,8 @@ def get_album_tracks_data(album_url):
 
 
 def reformat_album_data(album_track_data):
-    """Reads through Album Track Data and returns a list of all tracks in following format:
+    """Reads through Album Track Data and returns a list of all tracks in 
+    following format:
     {song} By {author}
     """
     reformatted_album_tracks = []
@@ -38,7 +48,8 @@ def reformat_album_data(album_track_data):
 # Playlist Functions:
 
 def get_playlist_tracks(playlist_url):
-    """Gets all tracks in a spotify playlist that is public using Spotify API, taking in the URL.
+    """Gets all tracks in a spotify playlist that is public using Spotify API, 
+    taking in the URL as the parameter.
     Credit to https://stackoverflow.com/a/39113522/6032128
     """
     results = sp.playlist_tracks(playlist_url)
@@ -50,7 +61,8 @@ def get_playlist_tracks(playlist_url):
 
 
 def reformat_playlist_tracks_data(playlist_tracks_data):
-    """Reads through Playlist Track Data and returns a list of all tracks in following format:
+    """Reads through Playlist Track Data and returns a list of all tracks in 
+    following format:
     {song} By {author}
     """
     reformatted_playlist_tracks = []
@@ -64,27 +76,28 @@ def reformat_playlist_tracks_data(playlist_tracks_data):
 
 # Youtube and Download Functions:
 
-def search_and_download(search, location):
-    """Searches the search parameter on Youtube, and downloads the first
-    video found when searching
-    """
-    file_name = re.sub(r'[\\/*?:"<>|]',"",search)
-    if file_name not in list_of_files_in_folder(location):
-        first_video_url = "http://youtube.com/" + YoutubeSearch(search, max_results=1).videos[0]["url_suffix"]
-        yt = YouTube(first_video_url, on_progress_callback=on_progress)
-        yt.streams.filter(only_audio=True)[-1].download(output_path=location, filename=file_name)
-
-
-#Functions for Main:
-
 def list_of_files_in_folder(location):
     """Returns a list of files in a folder, without extensions"""
     list_of_files = [f[:-5] for f in os.listdir(location) if os.path.isfile(os.path.join(location, f))]
     return list_of_files
 
 
+def search_and_download(search, location):
+    """Searches the search parameter on Youtube, and downloads the first
+    video found when searching
+    """
+    file_name = re.sub(r'[\\/*?:"<>|]',"",search)
+    if file_name not in list_of_files_in_folder(location):
+        url_suffix = YoutubeSearch(search, max_results=1).videos[0]["url_suffix"]
+        first_video_url = "http://youtube.com/" + url_suffix
+        yt = YouTube(first_video_url, on_progress_callback=on_progress)
+        yt.streams.filter(only_audio=True)[-1].download(output_path=location, filename=file_name)
+
+
 def download_list_of_tracks(list_of_tracks, download_location):
-    """Downloads songs in spotify playlist by searching the name through Youtube"""
+    """Downloads songs in spotify playlist by searching the name through 
+    Youtube
+    """
     for track in list_of_tracks:
         i = 0
         downloaded = False
@@ -100,6 +113,7 @@ def download_list_of_tracks(list_of_tracks, download_location):
 # Main Function:
 
 def main():
+    """Main function"""
     download_location = input("Enter location to download: ")
     spotify_url = input("Enter Spotify URL: ")
     is_playlist_url = "playlist" in spotify_url
