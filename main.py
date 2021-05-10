@@ -31,10 +31,11 @@ def get_album_tracks_data(album_url):
     return sp.album_tracks(album_url)
 
 
-def reformat_album_data(album_track_data):
+def reformat_album_data(album_track_data, location):
     """Reads through Album Track Data and returns a list of all tracks in 
     following format:
     {song} By {author}
+    The list only contains songs that are not found in the folder
     """
     reformatted_album_tracks = []
     for track in album_track_data['items']:
@@ -42,7 +43,7 @@ def reformat_album_data(album_track_data):
         track_name = track['name']
         reformatted_album_tracks.append("{} By {}".format(track_name, track_artist))
     
-    return reformatted_album_tracks
+    return list_of_tracks_not_downloaded(reformatted_album_tracks, location)
 
 
 # Playlist Functions:
@@ -60,10 +61,11 @@ def get_playlist_tracks(playlist_url):
     return playlist_tracks
 
 
-def reformat_playlist_tracks_data(playlist_tracks_data):
+def reformat_playlist_tracks_data(playlist_tracks_data, location):
     """Reads through Playlist Track Data and returns a list of all tracks in 
     following format:
     {song} By {author}
+    The list only contains songs that are not found in the folder
     """
     reformatted_playlist_tracks = []
     for track in playlist_tracks_data:
@@ -71,7 +73,7 @@ def reformat_playlist_tracks_data(playlist_tracks_data):
         song_name = track['track']['name']
         reformatted_playlist_tracks.append("{} By {}".format(song_name, artists))
     
-    return reformatted_playlist_tracks
+    return list_of_tracks_not_downloaded(reformatted_playlist_tracks, location)
 
 
 # Youtube and Download Functions:
@@ -79,27 +81,30 @@ def reformat_playlist_tracks_data(playlist_tracks_data):
 def list_of_files_in_folder(location):
     """Returns a list of files in a folder, without extensions"""
     return [f[:-5] for f in os.listdir(location) if os.path.isfile(os.path.join(location, f))]
-    
+
+def list_of_tracks_not_downloaded(list_of_tracks, location):
+    list_of_track_file_names = [re.sub(r'[\\/*?:"<>|]',"",track) for track in list_of_tracks]
+    return [track for track in list_of_track_file_names if track not in list_of_files_in_folder(location)]
 
 def search_and_download(search, location):
     """Searches the search parameter on Youtube, and downloads the first
     video found when searching
     """
-    file_name = re.sub(r'[\\/*?:"<>|]',"",search)
-    if file_name not in list_of_files_in_folder(location):
-        url_suffix = YoutubeSearch(search, max_results=1).videos[0]["url_suffix"]
-        first_video_url = "http://youtube.com/" + url_suffix
-        yt = YouTube(first_video_url, on_progress_callback=on_progress)
-        yt.streams.filter(only_audio=True)[-1].download(output_path=location, filename=file_name)
+    url_suffix = YoutubeSearch(search, max_results=1).videos[0]["url_suffix"]
+    first_video_url = "http://youtube.com/" + url_suffix
+    yt = YouTube(first_video_url, on_progress_callback=on_progress)
+    yt.streams.filter(only_audio=True)[-1].download(output_path=location, filename=file_name)
 
 
 def download_list_of_tracks(list_of_tracks, download_location):
     """Downloads songs in spotify playlist by searching the name through 
     Youtube
     """
+    track_number = 1
     for track in list_of_tracks:
         i = 0
         downloaded = False
+        print("Downloading {}... {}/{}".format(track, track_number, len(list_of_tracks)))
         while i < 3 and not downloaded:
             try:
                 search_and_download(track, download_location)
@@ -107,6 +112,7 @@ def download_list_of_tracks(list_of_tracks, download_location):
             except Exception as e:
                 print(e)
             i += 1
+        track_number += 1
 
 
 # Main Function:
@@ -117,10 +123,10 @@ def main():
     spotify_url = input("Enter Spotify URL: ")
     is_playlist_url = "playlist" in spotify_url
     if is_playlist_url:
-        list_of_tracks = reformat_playlist_tracks_data(get_playlist_tracks(spotify_url))
+        list_of_tracks = reformat_playlist_tracks_data(get_playlist_tracks(spotify_url), download_location)
         download_list_of_tracks(list_of_tracks, download_location)
     else:
-        list_of_tracks = reformat_album_data(get_album_tracks_data(spotify_url))
+        list_of_tracks = reformat_album_data(get_album_tracks_data(spotify_url), download_location)
         download_list_of_tracks(list_of_tracks, download_location)
 
 
