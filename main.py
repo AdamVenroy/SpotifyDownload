@@ -28,7 +28,7 @@ sp = spotipy.Spotify(client_credentials_manager=auth_manager)
 def get_album_tracks_data(album_url):
     """Gets Album Tracks Data from Spotify API taking in URL argument
     """
-    return sp.album_tracks(album_url)
+    return sp.album_tracks(album_url)['items']
 
 
 def reformat_album_data(album_track_data):
@@ -37,7 +37,7 @@ def reformat_album_data(album_track_data):
     {song} By {author}
     """
     reformatted_album_tracks = []
-    for track in album_track_data['items']:
+    for track in album_track_data:
         track_artist = track['artists'][0]['name']
         track_name = track['name']
         reformatted_album_tracks.append("{} By {}".format(track_name, track_artist))
@@ -97,7 +97,10 @@ def download_list_of_tracks(list_of_tracks, download_location):
     """Downloads songs in spotify playlist by searching the name through 
     Youtube
     """
+    track_number = 1
+    num_of_tracks = len(list_of_tracks)
     for track in list_of_tracks:
+        print("{}/{} Downloading {}".format(track_number, num_of_tracks, track), end="")
         i = 0
         downloaded = False
         while i < 3 and not downloaded:
@@ -106,22 +109,28 @@ def download_list_of_tracks(list_of_tracks, download_location):
                 downloaded = True
             except Exception as e:
                 print(e)
+                print("Trying again... {}/3".format(i))
             i += 1
+        track_number += 1
 
 
 # Main Function:
 
 def main():
-    """Main function"""
+    """Main function - asks for location to download and spotify link
+    and downloads the tracks in the spotify playlist/album
+    """
     download_location = input("Enter location to download: ")
     spotify_url = input("Enter Spotify URL: ")
     is_playlist_url = "playlist" in spotify_url
     if is_playlist_url:
         list_of_tracks = reformat_playlist_tracks_data(get_playlist_tracks(spotify_url))
         download_list_of_tracks(list_of_tracks, download_location)
+        print("Download finished.")
     else:
         list_of_tracks = reformat_album_data(get_album_tracks_data(spotify_url))
         download_list_of_tracks(list_of_tracks, download_location)
+        print("Download finished.")
 
 
 if __name__ == "__main__":
