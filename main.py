@@ -11,9 +11,9 @@ import spotipy
 from spotipy.oauth2 import SpotifyClientCredentials
 from pytube import YouTube
 from pytube.cli import on_progress
+from pytube.helpers import safe_filename
 import configparser
 from youtube_search import YoutubeSearch
-import re
 import os
 
 config=configparser.ConfigParser()
@@ -43,7 +43,9 @@ def reformat_album_data(album_track_data, location):
         track_name = track['name']
         reformatted_album_tracks.append("{} By {}".format(track_name, track_artist))
     
-    return list_of_tracks_not_downloaded(reformatted_album_tracks, location)
+    set_of_downloaded_tracks = set(list_of_tracks_downloaded(reformatted_album_tracks, location))
+    return [track for track in reformatted_album_tracks 
+    if safe_filename(track) not in set_of_downloaded_tracks]
 
 
 # Playlist Functions:
@@ -72,19 +74,21 @@ def reformat_playlist_tracks_data(playlist_tracks_data, location):
         artists = ' And '.join([artist['name'] for artist in track['track']['artists']])
         song_name = track['track']['name']
         reformatted_playlist_tracks.append("{} By {}".format(song_name, artists))
-    
-    return list_of_tracks_not_downloaded(reformatted_playlist_tracks, location)
+    set_of_downloaded_tracks = set(list_of_tracks_downloaded(reformatted_playlist_tracks, location))
+    return [track for track in reformatted_playlist_tracks 
+    if safe_filename(track) not in set_of_downloaded_tracks]
 
 
 # Youtube and Download Functions:
 
 def list_of_files_in_folder(location):
     """Returns a list of files in a folder, without extensions"""
-    return [f[:-5] for f in os.listdir(location) if os.path.isfile(os.path.join(location, f))]
+    return [f.split('.')[0] for f in os.listdir(location) if os.path.isfile(os.path.join(location, f))]
 
-def list_of_tracks_not_downloaded(list_of_tracks, location):
-    list_of_track_file_names = [re.sub(r'[\\/*?:"<>|]',"",track) for track in list_of_tracks]
-    return [track for track in list_of_track_file_names if track not in list_of_files_in_folder(location)]
+def list_of_tracks_downloaded(list_of_tracks, location):
+    list_of_track_file_names = [safe_filename(track) for track in list_of_tracks]
+    return [track for track in list_of_track_file_names 
+    if track in list_of_files_in_folder(location)]
 
 def search_and_download(search, location):
     """Searches the search parameter on Youtube, and downloads the first
@@ -93,7 +97,7 @@ def search_and_download(search, location):
     url_suffix = YoutubeSearch(search, max_results=1).videos[0]["url_suffix"]
     first_video_url = "http://youtube.com/" + url_suffix
     yt = YouTube(first_video_url, on_progress_callback=on_progress)
-    yt.streams.filter(only_audio=True)[-1].download(output_path=location, filename=file_name)
+    yt.streams.filter(only_audio=True)[-1].download(output_path=location, filename=search)
 
 
 def download_list_of_tracks(list_of_tracks, download_location):
@@ -101,15 +105,11 @@ def download_list_of_tracks(list_of_tracks, download_location):
     Youtube
     """
     track_number = 1
-<<<<<<< HEAD
     num_of_tracks = len(list_of_tracks)
-=======
->>>>>>> origin/not-in-folder
     for track in list_of_tracks:
-        print("{}/{} Downloading {}".format(track_number, num_of_tracks, track), end="")
-        i = 0
+        i = 1
         downloaded = False
-        print("Downloading {}... {}/{}".format(track, track_number, len(list_of_tracks)))
+        print("Downloading {}... {}/{}".format(track, track_number, num_of_tracks))
         while i < 3 and not downloaded:
             try:
                 search_and_download(track, download_location)
