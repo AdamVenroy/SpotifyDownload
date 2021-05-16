@@ -12,11 +12,11 @@ from spotipy.oauth2 import SpotifyClientCredentials
 from pytube import YouTube
 from pytube.cli import on_progress
 from pytube.helpers import safe_filename
-import configparser
+from configparser import ConfigParser
 from youtube_search import YoutubeSearch
 import os
 
-config=configparser.ConfigParser()
+config = ConfigParser()
 config.read('config.cfg')
 client_id = config.get('SPOTIFY', 'CLIENT_ID')
 client_secret = config.get('SPOTIFY', 'CLIENT_SECRET')
@@ -109,7 +109,7 @@ def download_list_of_tracks(list_of_tracks, download_location):
     for track in list_of_tracks:
         i = 1
         downloaded = False
-        print("Downloading {}... {}/{}".format(track, track_number, num_of_tracks))
+        print("Downloading {} | Track {}/{}".format(track, track_number, num_of_tracks))
         while i < 3 and not downloaded:
             try:
                 search_and_download(track, download_location)
