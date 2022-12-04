@@ -97,7 +97,7 @@ def search_and_download(search, location):
     url_suffix = YoutubeSearch(search, max_results=1).videos[0]["url_suffix"]
     first_video_url = "http://youtube.com/" + url_suffix
     yt = YouTube(first_video_url, on_progress_callback=on_progress)
-    yt.streams.filter(only_audio=True)[-1].download(output_path=location, filename=search)
+    yt.streams.filter(only_audio=True)[-1].download(output_path=location, filename=search+'.mp3')
 
 
 def download_list_of_tracks(list_of_tracks, download_location):
